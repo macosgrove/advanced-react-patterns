@@ -3,6 +3,7 @@
 
 import * as React from 'react'
 import {Switch} from '../switch'
+import {ErrorBoundary} from 'react-error-boundary'
 
 const ToggleContext = React.createContext();
 
@@ -27,33 +28,36 @@ function Toggle({children}) {
 
 function ToggleOn({children}) {
   const context = React.useContext(ToggleContext)
+  if (!context) throw new Error('Be sure to wrap ToggleButton in Toggle to supply its context')
   return context.on ? children : null
 }
 
 // 🐨 do the same thing to this that you did to the ToggleOn component
 function ToggleOff({children}) {
   const context = React.useContext(ToggleContext)
+  if (!context) throw new Error('Be sure to wrap ToggleButton in Toggle to supply its context')
   return context.on ? null : children
 }
 
 // 🐨 get `on` and `toggle` from the ToggleContext with `useContext`
 function ToggleButton({...props}) {
   const context = React.useContext(ToggleContext)
+  if (!context) throw new Error('Be sure to wrap ToggleButton in Toggle to supply its context')
   return <Switch on={context.on} onClick={context.toggle} {...props} />
 }
 
-function App() {
+function ErrorFallback({error, resetErrorBoundary}) {
   return (
-    <div>
-      <Toggle>
-        <ToggleOn>The button is on</ToggleOn>
-        <ToggleOff>The button is off</ToggleOff>
-        <div>
-          <ToggleButton />
-        </div>
-      </Toggle>
-    </div>
+      <div role="alert">
+        There was an error:{' '}
+        <pre style={{whiteSpace: 'normal'}}>{error.message}</pre>
+        <button onClick={resetErrorBoundary}>Check your code and try again</button>
+      </div>
   )
+}
+
+function App() {
+  return <ErrorBoundary FallbackComponent={ErrorFallback}><ToggleButton /></ErrorBoundary>
 }
 
 export default App
