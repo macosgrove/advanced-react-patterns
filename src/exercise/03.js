@@ -18,32 +18,27 @@ function Toggle({children}) {
   )
 }
 
-// 🐨 we'll still get the children from props (as it's passed to us by the
-// developers using our component), but we'll get `on` implicitly from
-// ToggleContext now
-// 🦉 You can create a helper method to retrieve the context here. Thanks to that,
-// your context won't be exposed to the user
-// 💰 `const context = React.useContext(ToggleContext)`
-// 📜 https://react.dev/reference/react/useContext
+function useToggle() {
+  const context = React.useContext(ToggleContext)
+  if (!context) throw new Error('Be sure to wrap Toggle... components in Toggle to supply their context')
+  return context
+}
 
 function ToggleOn({children}) {
-  const context = React.useContext(ToggleContext)
-  if (!context) throw new Error('Be sure to wrap ToggleButton in Toggle to supply its context')
-  return context.on ? children : null
+  const { on } = useToggle()
+  return on ? children : null
 }
 
 // 🐨 do the same thing to this that you did to the ToggleOn component
 function ToggleOff({children}) {
-  const context = React.useContext(ToggleContext)
-  if (!context) throw new Error('Be sure to wrap ToggleButton in Toggle to supply its context')
-  return context.on ? null : children
+  const { on } = useToggle()
+  return on ? null : children
 }
 
 // 🐨 get `on` and `toggle` from the ToggleContext with `useContext`
 function ToggleButton({...props}) {
-  const context = React.useContext(ToggleContext)
-  if (!context) throw new Error('Be sure to wrap ToggleButton in Toggle to supply its context')
-  return <Switch on={context.on} onClick={context.toggle} {...props} />
+  const { on, toggle } = useToggle()
+  return <Switch on={on} onClick={toggle} {...props} />
 }
 
 function ErrorFallback({error, resetErrorBoundary}) {
@@ -57,7 +52,19 @@ function ErrorFallback({error, resetErrorBoundary}) {
 }
 
 function App() {
-  return <ErrorBoundary FallbackComponent={ErrorFallback}><ToggleButton /></ErrorBoundary>
+    return (
+        <div>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <Toggle>
+                <ToggleOn>The button is on</ToggleOn>
+                <ToggleOff>The button is off</ToggleOff>
+                <div>
+                    <ToggleButton />
+                </div>
+            </Toggle>
+            </ErrorBoundary>
+        </div>
+    )
 }
 
 export default App
