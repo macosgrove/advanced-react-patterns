@@ -5,7 +5,8 @@ import * as React from 'react'
 import {Switch} from '../switch'
 import {ErrorBoundary} from 'react-error-boundary'
 
-const ToggleContext = React.createContext();
+const ToggleContext = React.createContext()
+ToggleContext.displayName = "ToggleContext"
 
 function Toggle({children}) {
   const [on, setOn] = React.useState(false)
