@@ -15,8 +15,9 @@ const actionTypes = {
   reset: 'reset',
 }
 
-const readOnlyWarning = "Warning: Failed prop type: You provided a `value` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`."
-
+const readOnlyWarning = "Failed prop type: You provided a `value` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`."
+const uncontrolledToControlledWarning = "A component is changing an uncontrolled input of type undefined to be controlled. Input elements should not switch from uncontrolled to controlled (or vice versa). Decide between using a controlled or uncontrolled input element for the lifetime of the component. More info: https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable\n"
+const controlledToUncontrolledWarning = "A component is changing a controlled input to be uncontrolled. Input elements should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled input element for the lifetime of the component. More info: https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable\n"
 
   function toggleReducer(state, {type, initialState}) {
   switch (type) {
@@ -43,6 +44,12 @@ function useToggle({
   const [state, dispatch] = React.useReducer(reducer, initialState)
   const onIsControlled = controlledOn != null
   const on = onIsControlled ? controlledOn : state.on
+
+  const {current: wasControlled} = React.useRef(onIsControlled)
+  React.useEffect(()=>{
+    warning(!(!wasControlled && onIsControlled), uncontrolledToControlledWarning)
+    warning(!(wasControlled && !onIsControlled), controlledToUncontrolledWarning)
+  }, [wasControlled, onIsControlled])
 
   React.useEffect(() => {
     const accidentalReadOnly = onIsControlled && !(onChange || readOnly)
@@ -102,7 +109,7 @@ function App() {
     if (action.type === actionTypes.toggle && timesClicked > 4) {
       return
     }
-    setBothOn(state.on)
+    setBothOn()
     setTimesClicked(c => c + 1)
   }
 
