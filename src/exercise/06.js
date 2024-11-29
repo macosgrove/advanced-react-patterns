@@ -109,7 +109,7 @@ function App() {
     if (action.type === actionTypes.toggle && timesClicked > 4) {
       return
     }
-    setBothOn()
+    setBothOn(state.on)
     setTimesClicked(c => c + 1)
   }
 
@@ -121,7 +121,7 @@ function App() {
   return (
     <div>
       <div>
-        <Toggle on={bothOn} readOnly/>
+        <Toggle on={bothOn} onChange={handleToggleChange} />
         <Toggle on={bothOn} onChange={handleToggleChange} />
       </div>
       {timesClicked > 4 ? (
