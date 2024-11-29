@@ -15,11 +15,7 @@ const actionTypes = {
   reset: 'reset',
 }
 
-const readOnlyWarning = "Failed prop type: You provided a `value` prop to a form field without an `onChange` handler. This will render a read-only field. If the field should be mutable use `defaultValue`. Otherwise, set either `onChange` or `readOnly`."
-const uncontrolledToControlledWarning = "A component is changing an uncontrolled input of type undefined to be controlled. Input elements should not switch from uncontrolled to controlled (or vice versa). Decide between using a controlled or uncontrolled input element for the lifetime of the component. More info: https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable\n"
-const controlledToUncontrolledWarning = "A component is changing a controlled input to be uncontrolled. Input elements should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled input element for the lifetime of the component. More info: https://react.dev/reference/react-dom/components/input#controlling-an-input-with-a-state-variable\n"
-
-  function toggleReducer(state, {type, initialState}) {
+function toggleReducer(state, {type, initialState}) {
   switch (type) {
     case actionTypes.toggle: {
       return {on: !state.on}
@@ -32,6 +28,45 @@ const controlledToUncontrolledWarning = "A component is changing a controlled in
     }
   }
 }
+
+function useControlledSwitchWarning(wasControlled, onIsControlled, componentName, controlPropName) {
+  const uncontrolledToControlledWarning = `\`${componentName}\` is changing from uncontrolled to be controlled. Components should not switch from uncontrolled to controlled (or vice versa). Decide between using a controlled or uncontrolled \`${componentName}\` for the lifetime of the component. Check the \`${controlPropName}\` prop.`
+  const controlledToUncontrolledWarning = `\`${componentName}\` is changing from controlled to be uncontrolled. Components should not switch from controlled to uncontrolled (or vice versa). Decide between using a controlled or uncontrolled \`${componentName}\` for the lifetime of the component. Check the \`${controlPropName}\` prop.`
+
+  React.useEffect(()=>{
+    warning(!(!wasControlled && onIsControlled), uncontrolledToControlledWarning)
+    warning(!(wasControlled && !onIsControlled), controlledToUncontrolledWarning)
+  }, [wasControlled, onIsControlled, componentName, controlPropName])
+}
+
+function useReadOnlyWarning(
+  onIsControlled,
+  onChange,
+  readOnly,
+  componentName,
+  controlPropName,
+  onChangeProp,
+  initialValueProp,
+  readOnlyProp
+) {
+  const readOnlyWarning = `A \`${controlPropName}\` prop was provided to \`${componentName}\` without an \`${onChangeProp}\` handler. This will result in a read-only \`${controlPropName}\` value. If you want it to be mutable, use \`${initialValueProp}\`. Otherwise, set either \`${onChangeProp}\` or \`${readOnlyProp}\`.`
+
+  React.useEffect(() => {
+    const accidentalReadOnly = onIsControlled && !(onChange || readOnly)
+    warning(!accidentalReadOnly, readOnlyWarning)
+  }, [
+    onIsControlled,
+    onChange,
+    readOnly,
+    componentName,
+    controlPropName,
+    onChangeProp,
+    initialValueProp,
+    readOnlyProp
+  ])
+}
+
+
 
 function useToggle({
   on: controlledOn,
@@ -46,15 +81,18 @@ function useToggle({
   const on = onIsControlled ? controlledOn : state.on
 
   const {current: wasControlled} = React.useRef(onIsControlled)
-  React.useEffect(()=>{
-    warning(!(!wasControlled && onIsControlled), uncontrolledToControlledWarning)
-    warning(!(wasControlled && !onIsControlled), controlledToUncontrolledWarning)
-  }, [wasControlled, onIsControlled])
+  useControlledSwitchWarning(wasControlled, onIsControlled, 'useToggle', 'on')
+  useReadOnlyWarning(
+    onIsControlled,
+    Boolean(onChange),
+    readOnly,
+    'useToggle',
+    'on',
+    'onChange',
+    'initialOn',
+    'readOnly'
+  )
 
-  React.useEffect(() => {
-    const accidentalReadOnly = onIsControlled && !(onChange || readOnly)
-    warning(!accidentalReadOnly, readOnlyWarning)
-  }, [onIsControlled, onChange, readOnly])
 
   function dispatchWithOnChange(action) {
     if (!onIsControlled) {
